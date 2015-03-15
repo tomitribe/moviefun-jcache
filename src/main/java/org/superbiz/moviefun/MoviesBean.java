@@ -16,9 +16,19 @@
  */
 package org.superbiz.moviefun;
 
+import org.superbiz.moviefun.cache.MovieCache;
+import org.superbiz.moviefun.cache.MovieIdCacheKeyGenerator;
+
+import javax.cache.Cache;
+import javax.cache.annotation.CacheKey;
+import javax.cache.annotation.CachePut;
+import javax.cache.annotation.CacheRemove;
+import javax.cache.annotation.CacheResult;
+import javax.cache.annotation.CacheValue;
 import javax.ejb.Lock;
 import javax.ejb.LockType;
 import javax.ejb.Singleton;
+import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
@@ -38,26 +48,52 @@ import java.util.Set;
 @Lock(LockType.READ)
 public class MoviesBean {
 
+    @Inject
+    @MovieCache(name = "results")
+    private Cache<Object, Object> resultsCache;
+
+    @Inject
+    @MovieCache(name = "count")
+    private Cache<Object, Object> countCache;
+
+    @Inject
+    @MovieCache(name = "genres")
+    private Cache<Object, Object> genreCache;
+
     @PersistenceContext(unitName = "movie-unit")
     private EntityManager entityManager;
 
-    public org.superbiz.moviefun.Movie find(final Long id) {
+    private void resetCaches() {
+        resultsCache.clear();
+        countCache.clear();
+        genreCache.clear();
+    }
+
+    @CacheResult(cacheName = "movieById")
+    public org.superbiz.moviefun.Movie find(@CacheKey final Long id) {
         return entityManager.find(org.superbiz.moviefun.Movie.class, id);
     }
 
-    public void addMovie(final Movie movie) {
+    @CachePut(cacheName = "movieById", cacheKeyGenerator = MovieIdCacheKeyGenerator.class)
+    public void addMovie(@CacheKey @CacheValue final Movie movie) {
+        resetCaches();
         entityManager.persist(movie);
     }
 
-    public void editMovie(final Movie movie) {
+    @CachePut(cacheName = "movieById", cacheKeyGenerator = MovieIdCacheKeyGenerator.class)
+    public void editMovie(@CacheKey @CacheValue final Movie movie) {
+        resetCaches();
         entityManager.merge(movie);
     }
 
+    @CacheRemove(cacheName = "movieById")
     public void deleteMovie(final long id) {
+        resetCaches();
         final Movie movie = entityManager.find(Movie.class, id);
         entityManager.remove(movie);
     }
 
+    @CacheResult(cacheName = "results")
     public List<Movie> getMovies(final Integer firstResult, final Integer maxResults, final String field, final String searchTerm) {
         final CriteriaBuilder qb = entityManager.getCriteriaBuilder();
         final CriteriaQuery<Movie> cq = qb.createQuery(Movie.class);
@@ -86,6 +122,7 @@ public class MoviesBean {
         return q.getResultList();
     }
 
+    @CacheResult(cacheName = "count")
     public int count(final String field, final String searchTerm) {
         final CriteriaBuilder qb = entityManager.getCriteriaBuilder();
         final CriteriaQuery<Long> cq = qb.createQuery(Long.class);
@@ -105,6 +142,7 @@ public class MoviesBean {
         return entityManager.createQuery(cq).getSingleResult().intValue();
     }
 
+    @CacheResult(cacheName = "genres")
     public Collection<String> getGenres() {
         final Set<String> result = new HashSet<String>();
 
