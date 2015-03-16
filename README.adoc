@@ -48,7 +48,7 @@ This example uses Hazelcast as the JCache provider.
 
 == Add annotations to the MoviesBean EJB
 
-Note the use of +@CacheResult+, +@CachePut+, @CacheRemove+.
+Note the use of +@CacheResult+, +@CachePut+, +@CacheRemove+.
 
 The +Cache+ instances can also be injected and manipulated directly - for this, the project has used a CDI +Producer+ -
 +CacheFactory+. Three caches are injected into fields in MoviesBean, and are cleared directly in the +resetCaches+ method
