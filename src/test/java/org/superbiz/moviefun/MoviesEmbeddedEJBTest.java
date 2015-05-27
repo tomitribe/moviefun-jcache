@@ -43,7 +43,7 @@ public class MoviesEmbeddedEJBTest {
 
     @Test
     public void testShouldAddAMovie() throws Exception {
-        final MoviesBean movies = (MoviesBean) ejbContainer.getContext().lookup("java:global/moviefun/MoviesBean!org.superbiz.moviefun.MoviesBean");
+        final MoviesBean movies = (MoviesBean) ejbContainer.getContext().lookup("java:global/moviefun-jcache/MoviesBean!org.superbiz.moviefun.MoviesBean");
 
         final Movie movie = new Movie();
         movie.setDirector("Michael Bay");
